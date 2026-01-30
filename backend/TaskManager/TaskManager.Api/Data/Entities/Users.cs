@@ -1,9 +1,11 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TaskManager.Api.Data.Entities
 {
-    public class User
+    [Table("Users")]
+    public class Users
     {
         [Key]
         public Guid Id { get; set; }
