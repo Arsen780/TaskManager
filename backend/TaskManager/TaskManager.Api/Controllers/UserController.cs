@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -113,6 +114,37 @@ public class UserController : ControllerBase
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
     }
+    ////// Weryfikacja maila //////
+
+    [HttpPost("VerifyEmail")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyDto verifydto)
+    {
+        if (string.IsNullOrEmpty(verifydto.Token))
+        {
+            return BadRequest(new { message = "Token jest wymagany!" });
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.VerificationToken == verifydto.Token);
+
+        if (user == null)
+        {
+            return BadRequest(new { message = "Nieprawidłowy token weryfikacyjny!" });
+        }
+
+        if (user.VerificationDate != null)
+        {
+            return BadRequest(new { message = "To konto zostało już zweryfikowane!" });
+        }
+
+        user.VerificationDate = DateTime.UtcNow;
+        user.VerificationToken = null;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Konto zostało pomyślnie zweryfikowane. Możesz się teraz zalogować." });
+    }
+
 
     ////////////  LOGIN  ///////////////////
 
@@ -139,7 +171,7 @@ public class UserController : ControllerBase
         var token = GenerateJwtToken(user);
         return Ok(new { token = token, user = userDto });
     }
-
+    /// JWT ///
     private string GenerateJwtToken(User user)
     {
         var claims = new List<Claim>
@@ -162,6 +194,53 @@ public class UserController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    ////// CREATE TASK //////
+    [Authorize]
+    [HttpPost("CreateTask")]
+    public async Task<IActionResult> CreateTask([FromBody] CreateTaskDTO createTaskDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return (BadRequest(ModelState));
+        }
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var task = new TaskItem
+        {
+            Name = createTaskDto.Name,
+            Description = createTaskDto.Description,
+            CreationDate = DateTime.UtcNow,
+            Deadline = createTaskDto.Deadline,
+            Status = createTaskDto.Status,
+            UserId = userId
+        };
+
+        _context.Tasks.Add(task);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(
+            nameof(GetTaskById),
+            new {id = task.Id},
+        task
+        );
+    }
+
+    [HttpGet("task/{id}")]
+    public async Task<IActionResult> GetTaskById (Guid id)
+    {
+        var task = await _context.Tasks.FindAsync(id);
+
+        if (task == null)
+            return NotFound();
+
+        return Ok(task);
+    }
 
 
 }

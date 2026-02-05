@@ -1,6 +1,6 @@
 ﻿namespace TaskManager.Api.Data.Entities
 {
-    public enum TaskStatus
+    public enum TaskItemStatus
     {
         ToDo = 0,
         InProgress = 1,

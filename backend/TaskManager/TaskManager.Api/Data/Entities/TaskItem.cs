@@ -17,7 +17,7 @@ namespace TaskManager.Api.Data.Entities
         public string? Description { get; set; } = string.Empty;
         public DateTime CreationDate { get; set; }
         public DateTime Deadline { get; set;}
-        public TaskStatus Status { get; set; }
+        public TaskItemStatus Status { get; set; }
 
     }
 }
