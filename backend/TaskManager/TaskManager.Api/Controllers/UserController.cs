@@ -194,53 +194,5 @@ public class UserController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    ////// CREATE TASK //////
-    [Authorize]
-    [HttpPost("CreateTask")]
-    public async Task<IActionResult> CreateTask([FromBody] CreateTaskDTO createTaskDto)
-    {
-        if (!ModelState.IsValid)
-        {
-            return (BadRequest(ModelState));
-        }
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (userIdClaim == null)
-            return Unauthorized();
-
-        var userId = Guid.Parse(userIdClaim.Value);
-
-        var task = new TaskItem
-        {
-            Name = createTaskDto.Name,
-            Description = createTaskDto.Description,
-            CreationDate = DateTime.UtcNow,
-            Deadline = createTaskDto.Deadline,
-            Status = createTaskDto.Status,
-            UserId = userId
-        };
-
-        _context.Tasks.Add(task);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(
-            nameof(GetTaskById),
-            new {id = task.Id},
-        task
-        );
-    }
-
-    [HttpGet("task/{id}")]
-    public async Task<IActionResult> GetTaskById (Guid id)
-    {
-        var task = await _context.Tasks.FindAsync(id);
-
-        if (task == null)
-            return NotFound();
-
-        return Ok(task);
-    }
-
 
 }
