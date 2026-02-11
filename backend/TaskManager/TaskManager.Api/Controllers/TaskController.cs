@@ -99,6 +99,76 @@ public class TaskController : ControllerBase
         return NoContent();
     }
 
+    ////// Updaate taska //////
+    [HttpPut("{id:guid}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateTask (Guid id, [FromBody] UpdateTaskDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+        {
+            return Unauthorized();
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var task = await _context.Tasks.FirstOrDefaultAsync(
+            t => t.Id == id && t.UserId == userId);
+
+        if(task == null)
+        {
+            return NotFound();
+        }
+
+        task.Name = dto.Name;
+        task.Description = dto.Description;
+        task.Status = dto.Status;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    ////// Zmiana statusu //////
+    [HttpPatch("{id:guid}/status")]
+    [Authorize]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateTaskStatusDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+        {
+            return Unauthorized();
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var task = await _context.Tasks.FirstOrDefaultAsync(
+            t => t.Id == id && t.UserId == userId);
+
+        if(task == null)
+        {
+            return NotFound();
+        }
+
+        task.Status = dto.Status;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
 
 
 }

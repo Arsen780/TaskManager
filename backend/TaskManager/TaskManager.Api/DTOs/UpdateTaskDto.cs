@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using TaskManager.Api.Data.Entities;
 
 namespace TaskManager.Api.DTOs
 {
@@ -7,6 +8,6 @@ namespace TaskManager.Api.DTOs
     {
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public TaskStatus TaskStatus { get; set; }
+        public TaskItemStatus Status { get; set; }
     }
 }
