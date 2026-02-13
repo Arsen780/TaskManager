@@ -194,5 +194,48 @@ public class UserController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    ////// Zmiana hasła //////
+    [HttpPut ("ChangePassword")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        if(userIdClaim == null)
+        {
+            return Unauthorized();
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var user = await _context.Users.FindAsync(userId);
+
+        if(user == null)
+        {
+            return NotFound();
+        }
+
+        if(!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.HashedPassword))
+        {
+            return BadRequest(new { message = "Błędne hasło!" });
+        }
+
+        if(!BCrypt.Net.BCrypt.Verify(dto.NewPassword, user.HashedPassword))
+        {
+            return BadRequest(new { message = "Hasła nie mogą być takie same!" });
+        }
+
+        user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.ModificateDate = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 
 }
