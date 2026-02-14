@@ -169,6 +169,57 @@ public class TaskController : ControllerBase
         return NoContent();
     }
 
+    ////// Paginacja //////
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetUserTasks([FromQuery] GetTasksQueryDto query)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        if(userIdClaim == null)
+        {
+            return Unauthorized();
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        var taskQuery = _context.Tasks.Where(t => t.UserId == userId);
+
+        // filtrowanie po statusie
+
+        if (query.Status.HasValue)
+        {
+            taskQuery = taskQuery.Where(t => t.Status == query.Status.Value);
+        }
+
+        // sortowanie
+
+        taskQuery = query.SortBy?.ToLower() switch
+        {
+            "creationdate" => query.SortDirection == "desc"
+            ? taskQuery.OrderByDescending(t => t.CreationDate)
+            : taskQuery.OrderBy(t => t.CreationDate),
+
+            _ => taskQuery.OrderByDescending(t => t.CreationDate)
+        };
+
+        var totalCount = await taskQuery.CountAsync();
+
+        var tasks = await taskQuery
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
+        .ToListAsync();
+
+        var result = new PageResultDto<TaskItem>
+        {
+            TotalCount = totalCount,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            Items = tasks
+        };
+
+        return Ok(result);
+    }
 
 
 }
