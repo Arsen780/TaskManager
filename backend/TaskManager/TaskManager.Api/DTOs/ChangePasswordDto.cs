@@ -12,6 +12,5 @@ namespace TaskManager.Api.DTOs
         @"^(?=.*[A-Z])(?=.*\d).{8,}$",
         ErrorMessage = "Hasło musi mieć co najmniej 8 znaków, w tym co najmniej jedną dużą literę i jedną cyfrę.")]
         public string NewPassword { get; set; }
-        public DateTime ModificateDate { get; set; }
     }
 }

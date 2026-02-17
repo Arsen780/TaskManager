@@ -1,14 +1,13 @@
-import { useState } from 'react'
+import { Container } from "@mui/material";
+import TasksPage from "./pages/TaskPage";
+
 
 function App() {
-
   return (
-    <>
-      <div>
-        dewde
-      </div>
-    </>
-  )
+    <Container maxWidth="md">
+      <TasksPage />
+    </Container>
+  );
 }
 
-export default App
+export default App;
